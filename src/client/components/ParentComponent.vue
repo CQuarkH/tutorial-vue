@@ -1,20 +1,51 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
 import ChildComponent from './ChildComponent.vue';
 
 const mensajePadre = ref('Hola desde el padre');
 
-const resetearMensaje = () => {
-    mensajePadre.value = 'Hola desde el padre';
+const resetearMensaje = async () => {
+    await fetchHelloMessage();
 }
 
-const tareas = ref([
-    { nombre: 'Hacer la cama', completada: false },
-    { nombre: 'Lavar los platos', completada: false },
-    { nombre: 'Hacer la compra', completada: false },
-    { nombre: 'Estudiar Vue 3', completada: false }
-]);
+const tareas = ref([]);
+
+const fetchHelloMessage = async () => {
+    const response = await fetch('http://localhost:3000/api/hello');
+    const data = await response.json();
+    mensajePadre.value = data.message;
+}
+
+const fetchTareas = async () => {
+    const response = await fetch('http://localhost:3000/api/tareas');
+    const data = await response.json();
+    tareas.value = data;
+}
+
+const updateTask = async (id) => {
+    const task = tareas.value.find(task => task.id === id);
+    const response = await fetch('http://localhost:3000/api/tareas', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(task)
+    });
+    const updatedTask = await response.json();
+    const index = tareas.value.findIndex(t => t.id === id);
+
+    if (index !== -1) {
+        tareas.value.splice(index, 1, updatedTask);
+    } else {
+        console.error("No se encontró la tarea a actualizar en el array.");
+    }
+}
+
+onMounted(() => {
+    fetchHelloMessage();
+    fetchTareas();
+});
 
 </script>
 
@@ -38,13 +69,13 @@ const tareas = ref([
             <div v-for="(tarea, index) in tareas" :key="index" class="form-check">
                 <!-- Checkbox vinculado a la propiedad completada de cada tarea
     -->
-                <input type="checkbox" v-model="tarea.completada" :id="'tarea' +
+                <input type="checkbox" @input="updateTask(tarea.id)" :id="'tarea' +
                     index" class="form-check-input">
                 <label :for="'tarea' + index" class="form-check-label">{{
-                    tarea.nombre }}</label>
+                    tarea.name }}</label>
                 <!-- Mensaje condicional que se muestra cuando la tarea está
     completada -->
-                <p v-if="tarea.completada" class="text-success">¡Tarea
+                <p v-if="tarea.done" class="text-success">¡Tarea
                     completada!</p>
             </div>
         </div>

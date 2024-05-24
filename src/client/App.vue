@@ -1,8 +1,11 @@
 <script setup>
 import ParentComponent from './components/ParentComponent.vue';
+import PiniaComponent from './components/PiniaComponent.vue';
+
 </script>
 
 <template>
+   <PiniaComponent />
    <ParentComponent />
 </template>
 
